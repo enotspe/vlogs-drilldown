@@ -61,7 +61,7 @@ import { breakdownViewsDefinitions, valueBreakdownViews } from './BreakdownViews
 import { getLogsPanelSortOrderFromURL } from './LogOptionsScene';
 import { LogsListScene } from './LogsListScene';
 import { drilldownLabelUrlKey, pageSlugUrlKey } from './ServiceSceneConstants';
-import { LokiQueryDirection } from 'services/lokiQuery';
+import { LogsQueryDirection } from 'services/queryTypes';
 import { getQueryRunner, getResourceQueryRunner } from 'services/panel';
 import { buildDataQuery, buildResourceQuery } from 'services/query';
 import { getLogOption, getMaxLines } from 'services/store';
@@ -886,7 +886,7 @@ function getLogsQueryQueryRunner(sceneRef: SceneObject) {
     get direction() {
       const sortOrder =
         getLogsPanelSortOrderFromURL() || getLogOption<LogsSortOrder>('sortOrder', LogsSortOrder.Descending);
-      return sortOrder === LogsSortOrder.Descending ? LokiQueryDirection.Backward : LokiQueryDirection.Forward;
+      return sortOrder === LogsSortOrder.Descending ? LogsQueryDirection.Backward : LogsQueryDirection.Forward;
     },
     get maxLines() {
       return getMaxLines(sceneRef);

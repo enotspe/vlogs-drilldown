@@ -47,16 +47,16 @@ interface Options {
   joinMatchFilters: boolean;
 
   /**
-   * Prefix of the logQL expression
+   * Prefix of the expression
    */
   prefix?: string;
 }
 
-export class ExpressionBuilder {
+export class VictoriaLogsExpressionBuilder {
   private filters: AdHocFilterWithLabels[];
   private options: Options;
-  private positiveFilterValueSeparator = 'or';
-  private negativeFilterValueSeparator = '|';
+  private positiveFilterValueSeparator = 'OR';
+  private negativeFilterValueSeparator = 'AND NOT';
 
   constructor(
     filters: AdHocFilterWithLabels[],
@@ -69,10 +69,6 @@ export class ExpressionBuilder {
     }
   }
 
-  /**
-   * Joins filters with same keys similar operators
-   * e.g. {level="info"}, {level="warn"} => {level=~"warn|info"}
-   */
   public getJoinedLabelsFilters(): AdHocFilterWithLabels[] {
     let { equalsFilters, notEqualsFilters, regexEqualFilters, regexNotEqualFilters } = this.getCombinedLabelFilters();
     const adHocFilters: AdHocFilterWithLabels[] = [];
@@ -92,10 +88,6 @@ export class ExpressionBuilder {
     return adHocFilters;
   }
 
-  /**
-   * Returns logQL expression for AdHocFilterWithLabels[]
-   * Merges multiple include matches into regex
-   */
   protected getExpr(): string {
     let {
       equalsFilters,
@@ -121,7 +113,7 @@ export class ExpressionBuilder {
       });
     }
 
-    const filtersString = this.buildLabelsLogQLFromFilters({
+    const filtersString = this.buildLogsQLFromFilters({
       equalsFilters,
       gteFilters,
       gtFilters,
@@ -133,7 +125,6 @@ export class ExpressionBuilder {
     });
 
     if (filtersString) {
-      // Append prefix if defined
       return (this.options.prefix ?? '') + filtersString;
     }
 
@@ -141,62 +132,42 @@ export class ExpressionBuilder {
   }
 
   public getLabelsExpr(options?: Partial<Options>): string {
-    const defaultOptions: Options = { decodeFilters: false, filterType: 'indexed', joinMatchFilters: true };
+    const defaultOptions: Options = {
+      decodeFilters: false,
+      filterType: 'indexed',
+      joinMatchFilters: true,
+      filterSeparator: ',',
+    };
+    this.options = { ...defaultOptions, ...options };
+    const expr = this.getExpr();
+    return expr ? `{${expr}}` : '';
+  }
+
+  public getFilterExpr(options?: Partial<Options>): string {
+    const defaultOptions: Options = {
+      decodeFilters: false,
+      filterSeparator: ' ', // Space for implicit AND
+      filterType: 'field',
+      joinMatchFilters: false,
+      prefix: '',
+    };
     this.options = { ...defaultOptions, ...options };
     return this.getExpr();
   }
 
-  /**
-   * Returns merged filters separated by pipe
-   */
   public getMetadataExpr(options?: Partial<Options>): string {
-    const defaultOptions: Options = {
-      decodeFilters: false,
-      filterSeparator: ' |',
-      filterType: 'field',
-      joinMatchFilters: false,
-      prefix: '| ',
-    };
-    this.options = { ...defaultOptions, ...options };
-    return this.getExpr();
+    return this.getFilterExpr(options);
   }
 
-  /**
-   * Same as metadata, but only include operators supported
-   */
   public getLevelsExpr(options?: Partial<Options>): string {
-    const defaultOptions: Options = {
-      decodeFilters: false,
-      filterSeparator: ' |',
-      filterType: 'field',
-      joinMatchFilters: false,
-      prefix: '| ',
-    };
-
-    this.options = { ...defaultOptions, ...options };
-    return this.getExpr();
+    return this.getFilterExpr(options);
   }
 
-  /**
-   * Returns merged filters separated by pipe
-   * JSON encodes value
-   */
   public getFieldsExpr(options?: Partial<Options>): string {
-    const defaultOptions: Options = {
-      decodeFilters: true,
-      filterSeparator: ' |',
-      filterType: 'field',
-      joinMatchFilters: false,
-      prefix: '| ',
-    };
-    this.options = { ...defaultOptions, ...options };
-    return this.getExpr();
+    return this.getFilterExpr({ ...options, decodeFilters: true });
   }
 
-  /**
-   * Transforms joined field value objects into logQL strings
-   */
-  private buildLabelsLogQLFromFilters({
+  private buildLogsQLFromFilters({
     equalsFilters,
     gteFilters,
     gtFilters,
@@ -224,11 +195,9 @@ export class ExpressionBuilder {
     let gtFiltersStrings: OperatorFilters;
     let gteFiltersStrings: OperatorFilters;
 
-    // Build the LogQL filters
     const allFilters: string[] = [];
 
     if (this.options.joinMatchFilters) {
-      // Join values arrays for all keys with "|" char
       equalFiltersStrings = this.joinCombinedFiltersValues(equalsFilters, '|');
       notEqualsFiltersStrings = this.joinCombinedFiltersValues(notEqualsFilters, '|');
       regexEqualFiltersStrings = this.joinCombinedFiltersValues(regexEqualFilters, '|');
@@ -239,7 +208,6 @@ export class ExpressionBuilder {
       allFilters.push(...this.buildJoinedFilters(regexEqualFiltersStrings, LabelFilterOp.RegexEqual));
       allFilters.push(...this.buildJoinedFilters(regexNotEqualFiltersStrings, LabelFilterOp.RegexNotEqual));
     } else {
-      // Do not join filters
       equalFiltersStrings = this.getFilterValues(equalsFilters);
       notEqualsFiltersStrings = this.getFilterValues(notEqualsFilters);
       regexEqualFiltersStrings = this.getFilterValues(regexEqualFilters);
@@ -251,7 +219,6 @@ export class ExpressionBuilder {
       allFilters.push(...this.buildFilter(regexNotEqualFiltersStrings, LabelFilterOp.RegexNotEqual));
     }
 
-    // //Numeric fields are never joined
     ltFiltersStrings = this.getFilterValues(ltFilters);
     lteFiltersStrings = this.getFilterValues(lteFilters);
     gtFiltersStrings = this.getFilterValues(gtFilters);
@@ -262,35 +229,18 @@ export class ExpressionBuilder {
     allFilters.push(...this.buildFilter(gtFiltersStrings, NumericFilterOp.gt));
     allFilters.push(...this.buildFilter(gteFiltersStrings, NumericFilterOp.gte));
 
-    if (this.options.debug) {
-      console.info('combined filters after stringify', {
-        allFilters,
-        equalFiltersStrings,
-        gteFiltersStrings,
-        gtFiltersStrings,
-        lteFiltersStrings,
-        ltFiltersStrings,
-        notEqualsFiltersStrings,
-        regexEqualFiltersStrings,
-        regexNotEqualFiltersStrings,
-      });
-    }
-
-    // Create the final output string by joining filters with filterSeparator char
-    const allFiltersString = trim(this.combineValues(allFilters, `${this.options.filterSeparator ?? ','} `));
+    const allFiltersString = trim(this.combineValues(allFilters, `${this.options.filterSeparator ?? ' '} `));
 
     if (this.options.debug) {
-      console.info('DEBUG labels expr', { allFiltersString });
+      console.info('DEBUG logsQL expr', { allFiltersString });
     }
 
     return allFiltersString;
   }
 
-  /**
-   * Group filter values by key
-   */
   private getCombinedLabelFilters() {
-    // Group filters by operator and key
+    // This logic remains largely the same as it's about grouping filters.
+    // The rendering part is what changes for LogsQL.
     const {
       [LabelFilterOp.Equal]: equal,
       [LabelFilterOp.NotEqual]: notEqual,
@@ -312,7 +262,6 @@ export class ExpressionBuilder {
     let gtFilters: CombinedFiltersValuesByKey | undefined;
     let gteFilters: CombinedFiltersValuesByKey | undefined;
 
-    // Escape values and combine filters by key and operator, multiple non-regex operations are returned under a different operator
     if (this.options.joinMatchFilters) {
       equalsFilters = this.combineFiltersValues(equal, LabelFilterOp.RegexEqual);
       notEqualsFilters = this.combineFiltersValues(notEqual, LabelFilterOp.RegexNotEqual);
@@ -325,23 +274,12 @@ export class ExpressionBuilder {
       regexNotEqualFilters = this.combineFiltersValues(regexNotEqual);
     }
 
-    // Numeric filters are never combined
     ltFilters = this.combineFiltersValues(lt);
     lteFilters = this.combineFiltersValues(lte);
     gtFilters = this.combineFiltersValues(gt);
     gteFilters = this.combineFiltersValues(gte);
 
-    if (this.options.debug) {
-      console.info('combined filters', {
-        equalsFilters,
-        notEqualsFilters,
-        regexEqualFilters,
-        regexNotEqualFilters,
-      });
-    }
-
     if (this.options.joinMatchFilters) {
-      // If we changed the operation, merge the values and remove the stale operator from the object
       if (equalsFilters) {
         regexEqualFilters = this.mergeFilters(LabelFilterOp.RegexEqual, equalsFilters, regexEqualFilters);
         equalsFilters = this.removeStaleOperators(equalsFilters, LabelFilterOp.Equal);
@@ -364,36 +302,23 @@ export class ExpressionBuilder {
     };
   }
 
-  /**
-   * Transforms values grouped by key to logQL filter strings
-   */
   private buildFilter(filters: OperatorFilters, operator: LabelFilterOp | NumericFilterOp): string[] {
     const filterStrings: string[] = [];
 
     for (const key in filters) {
-      const filtersWithSameOperatorsAndKeys: string[] = [];
       const values = filters[key];
-      if (isOperatorNumeric(operator)) {
-        values.forEach((value) =>
-          filtersWithSameOperatorsAndKeys.push(this.buildFilterString(key, operator, value, ''))
-        );
-      } else {
-        values.forEach((value) => filtersWithSameOperatorsAndKeys.push(this.buildFilterString(key, operator, value)));
-      }
+      const filtersWithSameOperatorsAndKeys = values.map((value) => this.buildFilterString(key, operator, value));
 
-      if (isOperatorInclusive(operator)) {
-        filterStrings.push(filtersWithSameOperatorsAndKeys.join(` ${this.positiveFilterValueSeparator} `));
+      if (filtersWithSameOperatorsAndKeys.length > 1 && isOperatorInclusive(operator)) {
+        filterStrings.push(`(${filtersWithSameOperatorsAndKeys.join(` ${this.positiveFilterValueSeparator} `)})`);
       } else {
-        filterStrings.push(filtersWithSameOperatorsAndKeys.join(` ${this.negativeFilterValueSeparator} `));
+        filterStrings.push(...filtersWithSameOperatorsAndKeys);
       }
     }
 
     return filterStrings;
   }
 
-  /**
-   * Transforms escaped & concatenated values into strings grouped by key to logQL filter strings
-   */
   private buildJoinedFilters(equalFiltersStrings: CombinedOperatorFilters, operator: LabelFilterOp) {
     const filterStrings = [];
     for (const key in equalFiltersStrings) {
@@ -402,9 +327,6 @@ export class ExpressionBuilder {
     return filterStrings;
   }
 
-  /**
-   * Cleans up CombinedFiltersValuesByKey if the operator was transformed
-   */
   private removeStaleOperators(filters: CombinedFiltersValuesByKey, expectedOperator: LabelFilterOp) {
     const result: CombinedFiltersValuesByKey = {};
     Object.keys(filters).forEach((key) => {
@@ -415,9 +337,6 @@ export class ExpressionBuilder {
     return result;
   }
 
-  /**
-   * Merges filters grouped by key from one operator group to another
-   */
   private mergeFilters(
     operatorTo: LabelFilterOp,
     filtersFrom: CombinedFiltersValuesByKey,
@@ -441,9 +360,6 @@ export class ExpressionBuilder {
     return filtersTo;
   }
 
-  /**
-   * Merges values for a single filter key
-   */
   private mergeCombinedFiltersValues(filtersFrom: CombinedFiltersValues, operatorTo: LabelFilterOp) {
     const values: string[] = [];
     if (filtersFrom.operator === operatorTo && filtersFrom.values?.length) {
@@ -452,9 +368,6 @@ export class ExpressionBuilder {
     return values;
   }
 
-  /**
-   * Iterates through all keys in an operator group and combines values with separator
-   */
   private joinCombinedFiltersValues(
     filters: CombinedFiltersValuesByKey | undefined,
     separator: string
@@ -471,9 +384,6 @@ export class ExpressionBuilder {
     return filterCombinedValues;
   }
 
-  /**
-   * Iterates through key groups and transforms filter values to key => values object
-   */
   private getFilterValues(filters: CombinedFiltersValuesByKey | undefined): OperatorFilters {
     const filterValues: OperatorFilters = {};
     for (const key in filters) {
@@ -487,21 +397,10 @@ export class ExpressionBuilder {
     return filterValues;
   }
 
-  /**
-   * Combines an array of values by separator
-   * Completely unnecessary wrapper of join
-   */
   private combineValues(values: string[], separator: string) {
     return values.join(`${separator}`);
   }
 
-  /**
-   * Combines and escapes values with the same operator, note assumes every filter has the same operator
-   * If multipleValuesOperator is set, multiple values will be combined into a single filter to use that operator in the output
-   * @param filtersByKey
-   * @param multipleValuesOperator
-   * @private
-   */
   private combineFiltersValues(
     filtersByKey: Dictionary<AdHocFilterWithLabels[]>,
     multipleValuesOperator?: LabelFilterOp
@@ -519,7 +418,6 @@ export class ExpressionBuilder {
 
       updatedOperatorAndEscapedValues[key] = { operator: updatedOperator, values: [] };
 
-      // Only one value for this key
       if (filtersByKey[key].length === 1) {
         const filterString = this.escapeFieldValue(
           firstFilter.operator,
@@ -527,10 +425,6 @@ export class ExpressionBuilder {
           firstFilter.valueLabels ?? []
         );
         updatedOperatorAndEscapedValues[key] = { operator: currentOperator, values: [filterString] };
-
-        if (this.options.debug) {
-          console.info('single value filter', { filter: firstFilter, filterString });
-        }
       } else {
         const values = this.escapeFieldValues(key, filtersByKey, updatedOperator);
         if (updatedOperatorAndEscapedValues[key].operator === undefined) {
@@ -544,94 +438,82 @@ export class ExpressionBuilder {
     return updatedOperatorAndEscapedValues;
   }
 
-  /**
-   * Iterates through all keys in a merged operator group and escapes the values
-   */
   private escapeFieldValues(
     key: string,
     filtersByKey: Dictionary<AdHocFilterWithLabels[]>,
     updatedOperator: LabelFilterOp | NumericFilterOp
   ) {
-    // Convert single operator to regex
     return filtersByKey[key].map((filter) =>
       this.escapeFieldValue(updatedOperator, filter.value, filter.valueLabels ?? [])
     );
   }
 
-  /**
-   * Escape field values:
-   * If value is encoded, decode it
-   * If value is empty, don't escape double quotes
-   * If value is custom user input, strip prefix and don't escape special regex chars
-   */
   private escapeFieldValue(operator: LabelFilterOp | string, value: string, valueLabels: string[]): string {
     const isUserInput = isAdHocFilterValueUserInput(value);
 
-    // decode value
     if (this.options.decodeFilters) {
       const fieldObject = getValueFromFieldsFilter({ value, valueLabels });
       value = fieldObject.value;
     }
 
     if (value === EMPTY_VARIABLE_VALUE) {
-      if (this.options.debug) {
-        console.info('empty variable value, do not escape');
-      }
-      // Don't encode empty value
       return value;
     }
 
     if (isUserInput) {
-      if (this.options.debug) {
-        console.info('ESCAPE: user input - exact selector', {
-          operator,
-          result: sceneUtils.escapeLabelValueInExactSelector(stripAdHocFilterUserInputPrefix(value)),
-          value,
-        });
-      }
       return sceneUtils.escapeLabelValueInExactSelector(stripAdHocFilterUserInputPrefix(value));
     }
     if (isOperatorRegex(operator)) {
-      if (this.options.debug) {
-        console.info('ESCAPE: regex selector', { operator, value });
-      }
       return sceneUtils.escapeLabelValueInRegexSelector(value);
-    }
-
-    if (this.options.debug) {
-      console.info('ESCAPE: exact selector', { operator, value });
     }
 
     return sceneUtils.escapeLabelValueInExactSelector(value);
   }
 
-  /**
-   * Builds logQL filter string.
-   * Expects pre-escaped content
-   * @private
-   */
   private buildFilterString(key: string, operator: LabelFilterOp | string, rawValue: string, quoteChar = '"') {
     if (rawValue === EMPTY_VARIABLE_VALUE) {
+      if (this.options.filterType === 'indexed') {
+        return `${key}${operator}${rawValue}`;
+      } else {
+        return `${key}:""`;
+      }
+    }
+
+    if (this.options.filterType === 'indexed') {
+      const op = operator === LabelFilterOp.Equal && this.options.joinMatchFilters ? LabelFilterOp.RegexEqual : operator;
+      return `${key}${op}${quoteChar}${rawValue}${quoteChar}`;
+    }
+
+    // Field filters for LogsQL
+    if (isOperatorNumeric(operator)) {
       return `${key}${operator}${rawValue}`;
     }
 
-    const filterString = `${key}${operator}${quoteChar}${rawValue}${quoteChar}`;
-    if (this.options.debug) {
-      console.info('buildDoubleQuotedFilter', { filter: { key, operator, value: rawValue }, filterString });
+    let logsQLOperator = '';
+    switch (operator) {
+      case LabelFilterOp.Equal:
+        logsQLOperator = ':=';
+        break;
+      case LabelFilterOp.NotEqual:
+        logsQLOperator = '!=';
+        break;
+      case LabelFilterOp.RegexEqual:
+        logsQLOperator = ':~';
+        break;
+      case LabelFilterOp.RegexNotEqual:
+        logsQLOperator = '!:~';
+        break;
+      default:
+        logsQLOperator = `:${operator}`;
     }
-
-    return filterString;
+    return `${key}${logsQLOperator}${quoteChar}${rawValue}${quoteChar}`;
   }
 
-  /**
-   * Groups all filters by operator and key
-   */
   private groupFiltersByKey(filters: AdHocVariableFilter[]): Record<FilterOpType, Dictionary<AdHocFilterWithLabels[]>> {
     let filteredFilters: AdHocVariableFilter[] = filters.filter(
       (f) => !this.options.ignoreKeys?.includes(f.key) || isOperatorRegex(f.operator)
     );
 
-    // We need at least one inclusive filter
     if (this.options.filterType === 'indexed') {
       if (filteredFilters.length < 1) {
         filteredFilters = filters;
@@ -655,13 +537,11 @@ export class ExpressionBuilder {
     const lt = filteredFilters.filter((filter) => filter.operator === FilterOp.lt);
     const lte = filteredFilters.filter((filter) => filter.operator === FilterOp.lte);
 
-    // Field ops
     const positiveMatchGroup = groupBy(positiveMatch, (filter) => filter.key);
     const positiveRegexGroup = groupBy(positiveRegex, (filter) => filter.key);
     const negativeMatchGroup = groupBy(negativeMatch, (filter) => filter.key);
     const negativeRegexGroup = groupBy(negativeRegex, (filter) => filter.key);
 
-    // Duration ops
     const gtGroup = groupBy(gt, (filter) => filter.key);
     const gteGroup = groupBy(gte, (filter) => filter.key);
     const ltGroup = groupBy(lt, (filter) => filter.key);

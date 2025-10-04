@@ -7,7 +7,7 @@ import { drilldownLabelUrlKey, pageSlugUrlKey } from '../ServiceScene/ServiceSce
 import { EmbeddedLogsExplorationProps } from './types';
 import { IndexScene } from 'Components/IndexScene/IndexScene';
 import initRuntimeDs from 'services/datasource';
-import { getMatcherFromQuery } from 'services/logqlMatchers';
+import { getMatcherFromQuery } from 'services/logsQueryMatchers';
 import { initializeMetadataService } from 'services/metadata';
 
 export function buildLogsExplorationFromState({

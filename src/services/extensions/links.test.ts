@@ -4,7 +4,7 @@ import {
   ValidByteUnitValues,
   validDurationValues,
 } from '../../Components/ServiceScene/Breakdowns/NumericFilterPopoverScene';
-import { LokiQuery } from '../lokiQuery';
+import { LogsQuery } from '../queryTypes';
 import { addAdHocFilterUserInputPrefix, EMPTY_VARIABLE_VALUE } from '../variables';
 import { interpolateQueryExpr, LinkConfigs, linkConfigs } from './links';
 import { addCustomInputPrefixAndValueLabels, encodeFilter, getPath } from './utils';
@@ -27,7 +27,7 @@ jest.mock('@grafana/runtime', () => ({
 
 function getTestConfig(
   links: LinkConfigs,
-  target: Partial<LokiQuery> & { refId: string },
+  target: Partial<LogsQuery> & { refId: string },
   context?: Partial<PluginExtensionPanelContext>
 ) {
   return links?.[0].configure?.({
@@ -50,7 +50,7 @@ function getTestConfig(
   });
 }
 
-function getTestTarget(lokiQuery?: Partial<LokiQuery>): Partial<LokiQuery> & { refId: string } {
+function getTestTarget(lokiQuery?: Partial<LogsQuery>): Partial<LogsQuery> & { refId: string } {
   return {
     datasource: {
       type: 'loki',

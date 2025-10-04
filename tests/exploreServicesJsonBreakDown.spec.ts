@@ -1,6 +1,6 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
-import { LokiQuery } from '../src/services/lokiQuery';
+import { LogsQuery } from '../src/services/queryTypes';
 import { testIds } from '../src/services/testIds';
 import { E2EComboboxStrings, ExplorePage, PlaywrightRequest } from './fixtures/explore';
 
@@ -52,7 +52,7 @@ test.describe('explore nginx-json breakdown pages ', () => {
 
       requests.forEach((req) => {
         const post = req.post;
-        const queries: LokiQuery[] = post.queries;
+        const queries: LogsQuery[] = post.queries;
         queries.forEach((query) => {
           expect(query.expr.replace(/\s+/g, '')).toContain(
             `sum by (${fieldName}) (count_over_time({service_name="nginx-json"} | json method="[\\"method\\"]" | drop __error__, __error_details__ | ${fieldName}!=""`.replace(

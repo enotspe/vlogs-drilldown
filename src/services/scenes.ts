@@ -4,7 +4,7 @@ import { sceneGraph, SceneObject, SceneObjectUrlValues, SceneQueryRunner, SceneT
 
 import { LogsListScene } from '../Components/ServiceScene/LogsListScene';
 import { logger } from './logger';
-import { LokiDatasource } from './lokiQuery';
+import { LogsDatasource } from './queryTypes';
 import { EXPLORATIONS_ROUTE } from './routing';
 import { getBooleanLogOption } from './store';
 import {
@@ -44,9 +44,9 @@ export function getColorByIndex(index: number) {
   return visTheme.getColorByName(visTheme.palette[index % 8]);
 }
 
-export async function getLokiDatasource(sceneObject: SceneObject) {
+export async function getLogsDatasource(sceneObject: SceneObject) {
   const ds = (await getDataSourceSrv().get(VAR_DATASOURCE_EXPR, { __sceneObject: { value: sceneObject } })) as
-    | LokiDatasource
+    | LogsDatasource
     | undefined;
   return ds;
 }

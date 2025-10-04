@@ -14,7 +14,7 @@ import { linkConfigs } from 'services/extensions/links';
 const App = lazy(async () => {
   const { wasmSupported } = await import('services/sorting');
 
-  const { default: initRuntimeDs } = await import('services/datasource');
+  const { default: initRuntimeDs } = await import('services/VictoriaLogsDatasource');
   const { default: initChangepoint } = await import('@bsull/augurs/changepoint');
   const { default: initOutlier } = await import('@bsull/augurs/outlier');
 

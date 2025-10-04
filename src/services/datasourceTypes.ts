@@ -1,9 +1,9 @@
 import { DataQueryRequest } from '@grafana/data';
 import { SceneObject } from '@grafana/scenes';
 
-import { LokiQuery } from './lokiQuery';
+import { LogsQuery } from './queryTypes';
 
-export type SceneDataQueryRequest = DataQueryRequest<LokiQuery & SceneDataQueryResourceRequest & VolumeRequestProps> & {
+export type SceneDataQueryRequest = DataQueryRequest<LogsQuery & SceneDataQueryResourceRequest & VolumeRequestProps> & {
   scopedVars?: { __sceneObject?: { valueOf: () => SceneObject } };
 };
 export type SceneDataQueryResourceRequest = {

@@ -16,7 +16,7 @@ import {
 import { Alert, Button } from '@grafana/ui';
 
 import { logger } from '../../../../services/logger';
-import { LokiQuery } from '../../../../services/lokiQuery';
+import { LogsQuery } from '../../../../services/queryTypes';
 import { getQueryRunner } from '../../../../services/panel';
 import { buildDataQuery } from '../../../../services/query';
 import { renderPatternFilters } from '../../../../services/renderPatternFilters';
@@ -83,7 +83,7 @@ export class PatternsLogsSampleScene extends SceneObjectBase<PatternsLogsSampleS
     });
   }
 
-  private replacePatternsInQuery(queryWithFilters: LokiQuery) {
+  private replacePatternsInQuery(queryWithFilters: LogsQuery) {
     const pendingPattern: AppliedPattern = {
       pattern: this.state.pattern,
       type: 'include',

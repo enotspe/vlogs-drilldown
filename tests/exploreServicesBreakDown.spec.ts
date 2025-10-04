@@ -2,7 +2,7 @@ import { expect, test } from '@grafana/plugin-e2e';
 
 import { DEFAULT_URL_COLUMNS } from '../src/Components/Table/constants';
 import { FilterOp } from '../src/services/filterTypes';
-import { LokiQuery, LokiQueryDirection } from '../src/services/lokiQuery';
+import { LogsQuery, LogsQueryDirection } from '../src/services/queryTypes';
 import { testIds } from '../src/services/testIds';
 import { SERVICE_NAME } from '../src/services/variables';
 import { ComboBoxIndex, E2EComboboxStrings, ExplorePage, levelTextMatch, PlaywrightRequest } from './fixtures/explore';

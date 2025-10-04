@@ -8,7 +8,7 @@ import {
 } from './datasource';
 import { extractParserFromArray } from './fields';
 import { LabelType } from './fieldsTypes';
-import { getLabelTypeFromFrame } from './lokiQuery';
+import { getLabelTypeFromFrame } from './queryTypes';
 
 jest.mock('./variables');
 

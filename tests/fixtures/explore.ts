@@ -4,7 +4,7 @@ import { expect } from '@grafana/plugin-e2e';
 
 import pluginJson from '../../src/plugin.json';
 import { FilterOp, FilterOpType } from '../../src/services/filterTypes';
-import { LokiQuery } from '../../src/services/lokiQuery';
+import { LogsQuery } from '../../src/services/queryTypes';
 import { testIds } from '../../src/services/testIds';
 
 export interface PlaywrightRequest {
@@ -191,15 +191,15 @@ export class ExplorePage {
 
   async waitForRequest(
     init: () => Promise<any>,
-    callback: (lokiQuery: LokiQuery) => void,
-    test: (lokiQuery: LokiQuery) => boolean
+    callback: (lokiQuery: LogsQuery) => void,
+    test: (lokiQuery: LogsQuery) => boolean
   ) {
     await Promise.all([
       init(),
       this.page.waitForResponse(
         (resp) => {
           const post = resp.request().postDataJSON();
-          const queries = post?.queries as LokiQuery[];
+          const queries = post?.queries as LogsQuery[];
           if (queries && test(queries[0])) {
             callback(queries[0]);
             return true;
@@ -307,7 +307,7 @@ export class ExplorePage {
     // Let's not wait for all these queries
     this.page.route('**/ds/query**', async (route) => {
       const post = route.request().postDataJSON();
-      const queries = post.queries as LokiQuery[];
+      const queries = post.queries as LogsQuery[];
       const refId = queries[0].refId;
       const legendFormat = queries[0].legendFormat;
 

@@ -28,7 +28,7 @@ import { ValueSlugs } from '../../../services/enums';
 import { calculateSparsity, getDetectedFieldType } from '../../../services/fields';
 import { FilterOp } from '../../../services/filterTypes';
 import { logger } from '../../../services/logger';
-import { LokiQuery } from '../../../services/lokiQuery';
+import { LogsQuery } from '../../../services/queryTypes';
 import { getValueBreakdownLink } from '../../../services/navigate';
 import { getRouteParams } from '../../../services/routing';
 import { findObjectOfType } from '../../../services/scenes';
@@ -354,7 +354,7 @@ export class SelectLabelActionScene extends SceneObjectBase<SelectLabelActionSce
     const queryRunner = findObjectOfType(data, (o) => o instanceof SceneQueryRunner, SceneQueryRunner);
     if (queryRunner) {
       const queries = queryRunner.state.queries;
-      const query = queries[0] as LokiQuery | undefined;
+      const query = queries[0] as LogsQuery | undefined;
       if (query?.expr.includes('avg_over_time')) {
         this.setState({
           hasNumericFilters: true,

@@ -8,7 +8,7 @@ import { UIVariableFilterType } from '../Components/ServiceScene/Breakdowns/AddT
 import { ExpressionBuilder } from './ExpressionBuilder';
 import { FilterOp } from './filterTypes';
 import { logger } from './logger';
-import { LokiDatasource, LokiQuery } from './lokiQuery';
+import { LogsDatasource, LogsQuery } from './queryTypes';
 import { isOperatorInclusive, isOperatorRegex } from './operatorHelpers';
 import { getDataSource } from './scenes';
 import { getFavoriteLabelValuesFromStorage } from './store';
@@ -68,8 +68,8 @@ export const getDetectedFieldValuesTagValuesProvider = async (
     throw new Error('Invalid datasource!');
   }
 
-  // Assert datasource is Loki
-  const lokiDatasource = datasourceUnknownType as LokiDatasource;
+  // Assert datasource is Logs
+  const lokiDatasource = datasourceUnknownType as LogsDatasource;
   // Assert language provider is LokiLanguageProvider
   const languageProvider = lokiDatasource.languageProvider as LokiLanguageProviderWithDetectedLabelValues;
 
@@ -189,7 +189,7 @@ export async function getLabelsTagValuesProvider(
     logger.error(new Error('getTagValuesProvider: Invalid datasource!'));
     throw new Error('Invalid datasource!');
   }
-  const datasource = datasource_ as LokiDatasource;
+  const datasource = datasource_ as LogsDatasource;
 
   if (datasource && datasource.getTagValues) {
     // Filter out other values for this key so users can include other values for this label
@@ -197,7 +197,7 @@ export async function getLabelsTagValuesProvider(
     const filters = filterTransformer.getJoinedLabelsFilters();
     const filtersFiltered = tagValuesFilterAdHocFilters(filters, filter);
 
-    const options: DataSourceGetTagValuesOptions<LokiQuery> = {
+    const options: DataSourceGetTagValuesOptions<LogsQuery> = {
       filters: filtersFiltered,
       key: filter.key,
     };

@@ -5,28 +5,28 @@ import { DataSourceRef } from '@grafana/schema';
 
 import { LabelType } from './fieldsTypes';
 
-export enum LokiQueryDirection {
+export enum LogsQueryDirection {
   Backward = 'backward',
   Forward = 'forward',
   Scan = 'scan',
 }
 
-export type LokiQuery = {
+export type LogsQuery = {
   datasource?: DataSourceRef;
-  direction?: LokiQueryDirection;
+  direction?: LogsQueryDirection;
   editorMode?: string;
   expr: string;
   legendFormat?: string;
   maxLines?: number;
-  queryType?: LokiQueryType;
+  queryType?: LogsQueryType;
   refId: string;
   step?: string;
   supportingQueryType?: string;
 };
 
-export type LokiQueryType = 'instant' | 'range' | 'stream' | string;
+export type LogsQueryType = 'instant' | 'range' | 'stream' | string;
 
-export type LokiDatasource = DataSourceWithBackend<LokiQuery, DataSourceJsonData> & {
+export type LogsDatasource = DataSourceWithBackend<LogsQuery, DataSourceJsonData> & {
   maxLines?: number;
 } & {
   getTimeRangeParams: (timeRange: TimeRange) => { end: number; start: number };

@@ -5,7 +5,7 @@ import { sortLineFilters } from '../Components/IndexScene/LineFilterVariablesSce
 import { SceneDataQueryResourceRequest, SceneDataQueryResourceRequestOptions } from './datasourceTypes';
 import { ExpressionBuilder } from './ExpressionBuilder';
 import { LineFilterCaseSensitive, LineFilterOp } from './filterTypes';
-import { LokiQuery } from './lokiQuery';
+import { LogsQuery } from './queryTypes';
 import { PLUGIN_ID } from './plugin';
 import {
   addAdHocFilterUserInputPrefix,
@@ -25,9 +25,9 @@ import {
 export const buildResourceQuery = (
   expr: string,
   resource: SceneDataQueryResourceRequestOptions,
-  queryParamsOverrides?: Partial<LokiQuery>,
+  queryParamsOverrides?: Partial<LogsQuery>,
   primaryLabel?: string
-): LokiQuery & SceneDataQueryResourceRequest & { primaryLabel?: string } => {
+): LogsQuery & SceneDataQueryResourceRequest & { primaryLabel?: string } => {
   return {
     ...defaultQueryParams,
     refId: resource,
@@ -42,9 +42,9 @@ export const buildResourceQuery = (
  * Builds a loki data query
  * @param expr
  * @param queryParamsOverrides
- * @returns LokiQuery
+ * @returns LogsQuery
  */
-export const buildDataQuery = (expr: string, queryParamsOverrides?: Partial<LokiQuery>): LokiQuery => {
+export const buildDataQuery = (expr: string, queryParamsOverrides?: Partial<LogsQuery>): LogsQuery => {
   return {
     ...defaultQueryParams,
     ...queryParamsOverrides,
@@ -64,7 +64,7 @@ export const buildVolumeQuery = (
   resource: 'detected_fields' | 'detected_labels' | 'labels' | 'patterns' | 'volume',
   primaryLabel: string,
   queryParamsOverrides?: Record<string, unknown>
-): LokiQuery & SceneDataQueryResourceRequest => {
+): LogsQuery & SceneDataQueryResourceRequest => {
   return buildResourceQuery(expr, resource, { ...queryParamsOverrides }, primaryLabel);
 };
 

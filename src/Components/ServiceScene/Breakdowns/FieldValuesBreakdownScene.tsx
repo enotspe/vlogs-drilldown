@@ -26,7 +26,7 @@ import {
   getParserFromFieldsFilters,
 } from '../../../services/fields';
 import { logger } from '../../../services/logger';
-import { LokiQuery } from '../../../services/lokiQuery';
+import { LogsQuery } from '../../../services/queryTypes';
 import { getQueryRunner } from '../../../services/panel';
 import { buildDataQuery, renderLogQLFieldFilters, renderLogQLMetadataFilters } from '../../../services/query';
 import { DEFAULT_SORT_BY } from '../../../services/sorting';
@@ -329,7 +329,7 @@ export class FieldValuesBreakdownScene extends SceneObjectBase<FieldValuesBreakd
   /**
    * Actions to run when the value breakdown query response is received.
    */
-  private onValuesDataQueryChange(newState: SceneDataState, query: LokiQuery) {
+  private onValuesDataQueryChange(newState: SceneDataState, query: LogsQuery) {
     if (newState.data?.state === LoadingState.Done) {
       if (this.state.body instanceof SceneReactObject) {
         this.setState({
@@ -375,7 +375,7 @@ export class FieldValuesBreakdownScene extends SceneObjectBase<FieldValuesBreakd
   /**
    * Builds the layout switcher
    */
-  private buildBody(query: LokiQuery) {
+  private buildBody(query: LogsQuery) {
     const { optionValue, parser } = this.getParserForThisField();
     const { direction, sortBy } = getSortByPreference('fields', DEFAULT_SORT_BY, 'desc');
     const fieldsBreakdownScene = sceneGraph.getAncestor(this, FieldsBreakdownScene);

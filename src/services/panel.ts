@@ -27,8 +27,8 @@ import { HideSeriesConfig } from '@grafana/schema';
 import { DrawStyle, StackingMode } from '@grafana/ui';
 
 import { LOGS_COUNT_QUERY_REFID, LOGS_PANEL_QUERY_REFID } from '../Components/ServiceScene/ServiceScene';
-import { WRAPPED_LOKI_DS_UID } from './datasource';
-import { getParserForField } from './fields';
+import { WRAPPED_VICTORIALOGS_DS_UID } from './VictoriaLogsDatasource';
+import { LogsQuery } from './queryTypes';
 import { getLabelsFromSeries, getVisibleFields, getVisibleLabels, getVisibleMetadata } from './labels';
 import { getLevelLabelsFromSeries, getVisibleLevels } from './levels';
 import { LokiQuery } from './lokiQuery';
@@ -270,15 +270,15 @@ export function sortLevelTransformation() {
   };
 }
 
-export function getResourceQueryRunner(queries: LokiQuery[], queryRunnerOptions?: Partial<QueryRunnerState>) {
+export function getResourceQueryRunner(queries: LogsQuery[], queryRunnerOptions?: Partial<QueryRunnerState>) {
   return new SceneQueryRunner({
-    datasource: { uid: WRAPPED_LOKI_DS_UID },
+    datasource: { uid: WRAPPED_VICTORIALOGS_DS_UID },
     queries: queries,
     ...queryRunnerOptions,
   });
 }
 
-export function getQueryRunner(queries: LokiQuery[], queryRunnerOptions?: Partial<QueryRunnerState>) {
+export function getQueryRunner(queries: LogsQuery[], queryRunnerOptions?: Partial<QueryRunnerState>) {
   // if there's a legendFormat related to any `level` like label, we want to
   // sort the output equally. That's purposefully not `LEVEL_VARIABLE_VALUE`,
   // such that the `detected_level` graph looks the same as a graph for the
@@ -292,7 +292,7 @@ export function getQueryRunner(queries: LokiQuery[], queryRunnerOptions?: Partia
   if (hasLevel) {
     return new SceneDataTransformer({
       $data: getSceneQueryRunner({
-        datasource: { uid: WRAPPED_LOKI_DS_UID },
+        datasource: { uid: WRAPPED_VICTORIALOGS_DS_UID },
         queries: queries,
         ...queryRunnerOptions,
       }),
@@ -303,7 +303,7 @@ export function getQueryRunner(queries: LokiQuery[], queryRunnerOptions?: Partia
   if (!isLogPanelQuery) {
     return new SceneDataTransformer({
       $data: getSceneQueryRunner({
-        datasource: { uid: WRAPPED_LOKI_DS_UID },
+        datasource: { uid: WRAPPED_VICTORIALOGS_DS_UID },
         queries: queries,
         ...queryRunnerOptions,
       }),
@@ -312,7 +312,7 @@ export function getQueryRunner(queries: LokiQuery[], queryRunnerOptions?: Partia
   }
 
   return getSceneQueryRunner({
-    datasource: { uid: WRAPPED_LOKI_DS_UID },
+    datasource: { uid: WRAPPED_VICTORIALOGS_DS_UID },
     queries: queries,
     ...queryRunnerOptions,
   });
@@ -320,7 +320,7 @@ export function getQueryRunner(queries: LokiQuery[], queryRunnerOptions?: Partia
 
 export function getSceneQueryRunner(queryRunnerOptions?: Partial<QueryRunnerState>) {
   return new SceneQueryRunner({
-    datasource: { uid: WRAPPED_LOKI_DS_UID },
+    datasource: { uid: WRAPPED_VICTORIALOGS_DS_UID },
     queries: [],
     ...queryRunnerOptions,
   });

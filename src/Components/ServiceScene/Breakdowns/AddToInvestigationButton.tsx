@@ -14,18 +14,18 @@ import { DataSourceRef } from '@grafana/schema';
 import { IconButton } from '@grafana/ui';
 
 import LokiLogo from '../../../img/logo.svg';
-import { LokiDatasource, LokiQuery } from '../../../services/lokiQuery';
+import { LogsDatasource, LogsQuery } from '../../../services/queryTypes';
 import { interpolateExpression } from '../../../services/query';
 import { ExtensionPoints } from 'services/extensions/links';
 import { findObjectOfType, getLokiDatasource } from 'services/scenes';
 
 export interface AddToInvestigationButtonState extends SceneObjectState {
   context?: ExtensionContext;
-  ds?: LokiDatasource;
+  ds?: LogsDatasource;
   fieldName?: string;
   frame?: DataFrame;
   labelName?: string;
-  queries: LokiQuery[];
+  queries: LogsQuery[];
   type?: 'timeseries' | 'logs' | undefined;
 }
 
@@ -37,7 +37,7 @@ type ExtensionContext = {
   logoPath: string;
   note?: string;
   origin: string;
-  queries: LokiQuery[];
+  queries: LogsQuery[];
   timeRange: TimeRange;
   title: string;
   type: string;

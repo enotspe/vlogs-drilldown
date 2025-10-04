@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { DataQueryRequest, DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
 
 import { getMockFrames } from './combineResponses.test';
-import { LokiDatasource, LokiQuery } from './lokiQuery';
+import { LogsDatasource, LogsQuery } from './queryTypes';
 import { runShardSplitQuery } from './shardQuerySplitting';
 
 jest.mock('uuid', () => ({
@@ -23,7 +23,7 @@ afterAll(() => {
 });
 
 describe('runShardSplitQuery()', () => {
-  let datasource: LokiDatasource;
+  let datasource: LogsDatasource;
   const range = {
     from: dateTime('2023-02-08T04:00:00.000Z'),
     raw: {
@@ -33,21 +33,21 @@ describe('runShardSplitQuery()', () => {
     to: dateTime('2023-02-08T11:00:00.000Z'),
   };
 
-  const createRequest = (targets: Array<Partial<LokiQuery>>, overrides?: Partial<DataQueryRequest<LokiQuery>>) => {
+  const createRequest = (targets: Array<Partial<LogsQuery>>, overrides?: Partial<DataQueryRequest<LogsQuery>>) => {
     let request = {
       intervalMs: 60000,
       range,
       requestId: 'TEST',
       targets,
-    } as DataQueryRequest<LokiQuery>;
+    } as DataQueryRequest<LogsQuery>;
 
     Object.assign(request, overrides);
     return request;
   };
-  let request: DataQueryRequest<LokiQuery>;
+  let request: DataQueryRequest<LogsQuery>;
   beforeEach(() => {
     request = createRequest([{ expr: 'count_over_time($SELECTOR[1m])', refId: 'A' }]);
-    datasource = createLokiDatasource();
+    datasource = createLogsDatasource();
     datasource.languageProvider.fetchLabelValues.mockResolvedValue(['1', '10', '2', '20', '3']);
     const { metricFrameA } = getMockFrames();
     // @ts-expect-error
@@ -117,7 +117,7 @@ describe('runShardSplitQuery()', () => {
   });
 
   test('Sends the whole stream selector to fetch values', async () => {
-    datasource.interpolateVariablesInQueries = jest.fn().mockImplementation((queries: LokiQuery[]) => {
+    datasource.interpolateVariablesInQueries = jest.fn().mockImplementation((queries: LogsQuery[]) => {
       return queries.map((query) => {
         query.expr = query.expr.replace('$SELECTOR', '{service_name="test", filter="true"}');
         return query;
@@ -425,9 +425,9 @@ describe('runShardSplitQuery()', () => {
   });
 });
 
-function createLokiDatasource() {
+function createLogsDatasource() {
   return {
-    interpolateVariablesInQueries: jest.fn().mockImplementation((queries: LokiQuery[]) => {
+    interpolateVariablesInQueries: jest.fn().mockImplementation((queries: LogsQuery[]) => {
       return queries.map((query) => {
         query.expr = query.expr.replace('$SELECTOR', '{a="b"}');
         return query;
@@ -438,5 +438,5 @@ function createLokiDatasource() {
     },
     query: jest.fn(),
     runQuery: jest.fn(),
-  } as unknown as LokiDatasource;
+  } as unknown as LogsDatasource;
 }

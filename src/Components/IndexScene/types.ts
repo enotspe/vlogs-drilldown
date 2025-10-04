@@ -2,7 +2,7 @@ import { AdHocVariableFilter } from '@grafana/data';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
 
 import { LineFilterType } from '../../services/filterTypes';
-import { LokiDatasource } from '../../services/lokiQuery';
+import { LogsDatasource } from '../../services/queryTypes';
 import { AppliedPattern } from '../../services/variables';
 import { OptionalRouteMatch } from '../Pages';
 import { LayoutScene } from './LayoutScene';
@@ -14,7 +14,7 @@ export interface IndexSceneState extends SceneObjectState {
   controls?: SceneObject[];
   currentFiltersMatchReference?: boolean;
   defaultLineFilters?: LineFilterType[];
-  ds?: LokiDatasource;
+  ds?: LogsDatasource;
   embedded?: boolean;
   embedderName?: string;
   initialLabels?: AdHocVariableFilter[];

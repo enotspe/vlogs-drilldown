@@ -6,7 +6,8 @@ import {
   PluginExtensionPanelContext,
 } from '@grafana/data';
 
-import { getMatcherFromQuery } from './logqlMatchers';
+import { getMatcherFromQuery } from './logsQueryMatchers';
+import { LogsQuery } from './queryTypes';
 
 describe('getMatcherFromQuery', () => {
   describe('Fields', () => {
@@ -56,7 +57,7 @@ describe('getMatcherFromQuery', () => {
       const result = getMatcherFromQuery('{service_name="tempo-distributor"} | logfmt | label="value"', context, {
         refId: 'test',
         expr: '',
-      });
+      } as LogsQuery);
 
       expect(result.fields).toEqual([
         {

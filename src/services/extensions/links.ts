@@ -13,8 +13,8 @@ import { getTemplateSrv, locationService } from '@grafana/runtime';
 import pluginJson from '../../plugin.json';
 import { LabelType } from '../fieldsTypes';
 import { FieldFilter, IndexedLabelFilter, LineFilterType, PatternFilterOp, PatternFilterType } from '../filterTypes';
-import { getMatcherFromQuery } from '../logqlMatchers';
-import { LokiQuery } from '../lokiQuery';
+import { getMatcherFromQuery } from '../logsQueryMatchers';
+import { LogsQuery } from '../queryTypes';
 import { isOperatorInclusive } from '../operatorHelpers';
 import { renderPatternFilters } from '../renderPatternFilters';
 import { escapeLabelValueInExactSelector, lokiSpecialRegexEscape } from './scenesMethods';
@@ -174,21 +174,21 @@ function contextToLink<T extends PluginExtensionPanelContext>(context?: T) {
   if (!context) {
     return undefined;
   }
-  const lokiQuery = context.targets.find((target) => target.datasource?.type === 'loki') as LokiQuery | undefined;
+  const logsQuery = context.targets.find((target) => target.datasource?.type === 'loki') as LogsQuery | undefined;
   const templateSrv = getTemplateSrv();
-  const dataSourceUid = templateSrv.replace(lokiQuery?.datasource?.uid, context.scopedVars);
+  const dataSourceUid = templateSrv.replace(logsQuery?.datasource?.uid, context.scopedVars);
 
-  if (!lokiQuery || !dataSourceUid) {
+  if (!logsQuery || !dataSourceUid) {
     return undefined;
   }
 
   // if there is no loki expression but the datasource is loki, then return createAppUrl()
-  if (!lokiQuery?.expr) {
+  if (!logsQuery?.expr) {
     return { path: createAppUrl() };
   }
 
-  const expr = templateSrv.replace(lokiQuery.expr, context.scopedVars, interpolateQueryExpr);
-  const { fields, labelFilters, lineFilters, patternFilters } = getMatcherFromQuery(expr, context, lokiQuery);
+  const expr = templateSrv.replace(logsQuery.expr, context.scopedVars, interpolateQueryExpr);
+  const { fields, labelFilters, lineFilters, patternFilters } = getMatcherFromQuery(expr, context, logsQuery);
   const labelSelector = labelFilters.find((selector) => isOperatorInclusive(selector.operator));
 
   // If there's no label selector, return a link to the service selection

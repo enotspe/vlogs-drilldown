@@ -2,7 +2,7 @@ import { MetricExpr, parser, Selector } from '@grafana/lezer-logql';
 
 import { SceneDataQueryRequest } from './datasourceTypes';
 import { getNodesFromQuery } from './logqlMatchers';
-import { LokiQuery } from './lokiQuery';
+import { LogsQuery } from './queryTypes';
 
 export function isQueryWithNode(query: string, nodeType: number): boolean {
   let isQueryWithNode = false;
@@ -51,7 +51,7 @@ export const addShardingPlaceholderSelector = (query: string) => {
   return query.replace('}', `, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`);
 };
 
-export const interpolateShardingSelector = (queries: LokiQuery[], shards?: number[]) => {
+export const interpolateShardingSelector = (queries: LogsQuery[], shards?: number[]) => {
   if (shards === undefined || shards.length === 0) {
     return queries.map((query) => ({
       ...query,

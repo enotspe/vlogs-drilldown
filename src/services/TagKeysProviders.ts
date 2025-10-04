@@ -14,7 +14,7 @@ import { UIVariableFilterType } from '../Components/ServiceScene/Breakdowns/AddT
 import { ExpressionBuilder } from './ExpressionBuilder';
 import { LABELS_TO_REMOVE } from './filters';
 import { logger } from './logger';
-import { LokiDatasource, LokiQuery } from './lokiQuery';
+import { LogsDatasource, LogsQuery } from './queryTypes';
 import { getDataSource } from './scenes';
 import { DetectedFieldsResult, LokiLanguageProviderWithDetectedLabelValues } from './TagValuesProviders';
 import { LEVEL_VARIABLE_VALUE, ParserType, VAR_FIELDS_AND_METADATA, VAR_LEVELS } from './variables';
@@ -28,13 +28,13 @@ export async function getLabelsTagKeysProvider(variable: AdHocFiltersVariable): 
     logger.error(new Error('getTagKeysProvider: Invalid datasource!'));
     throw new Error('Invalid datasource!');
   }
-  const datasource = datasource_ as LokiDatasource;
+  const datasource = datasource_ as LogsDatasource;
 
   if (datasource && datasource.getTagKeys) {
     const filtersTransformer = new ExpressionBuilder(variable.state.filters);
     const filters = filtersTransformer.getJoinedLabelsFilters();
 
-    const options: DataSourceGetTagKeysOptions<LokiQuery> = {
+    const options: DataSourceGetTagKeysOptions<LogsQuery> = {
       filters,
     };
 
@@ -74,7 +74,7 @@ export async function getFieldsKeysProvider({
     logger.error(new Error('getTagKeysProvider: Invalid datasource!'));
     throw new Error('Invalid datasource!');
   }
-  const datasource = datasource_ as LokiDatasource;
+  const datasource = datasource_ as LogsDatasource;
   const languageProvider = datasource.languageProvider as LokiLanguageProviderWithDetectedLabelValues;
 
   const options: DetectedFieldQueryOptions = {
@@ -160,7 +160,7 @@ export async function getFieldsKeysProvider({
 const EMPTY_SELECTOR = '{}';
 // @todo delete after min supported grafana is upgraded to >=11.6
 async function fetchDetectedFields(
-  datasource: LokiDatasource,
+  datasource: LogsDatasource,
   queryOptions: DetectedFieldQueryOptions,
   requestOptions?: Partial<BackendSrvRequest>
 ): Promise<DetectedFieldsResult | Error> {

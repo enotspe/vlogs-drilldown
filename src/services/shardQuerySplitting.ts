@@ -7,9 +7,9 @@ import { MaxSeriesRegex } from '../Components/ServiceScene/Breakdowns/QueryError
 import pluginJson from '../plugin.json';
 import { combineResponses } from './combineResponses';
 import { logger } from './logger';
-import { addShardingPlaceholderSelector, getSelectorForShardValues, interpolateShardingSelector } from './logql';
+import { addShardingPlaceholderSelector, getSelectorForShardValues, interpolateShardingSelector } from './logsQuery';
 import { isValidQuery } from './logqlMatchers';
-import { LokiDatasource, LokiQuery } from './lokiQuery';
+import { LogsDatasource, LogsQuery } from './queryTypes';
 
 /**
  * Query splitting by stream shards.
@@ -45,7 +45,7 @@ import { LokiDatasource, LokiQuery } from './lokiQuery';
  * - Once all request groups have been executed, it will be done().
  */
 
-export function runShardSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
+export function runShardSplitQuery(datasource: LogsDatasource, request: DataQueryRequest<LogsQuery>) {
   const queries = datasource
     .interpolateVariablesInQueries(request.targets, request.scopedVars)
     .filter((query) => query.expr)
@@ -58,9 +58,9 @@ export function runShardSplitQuery(datasource: LokiDatasource, request: DataQuer
 }
 
 function splitQueriesByStreamShard(
-  datasource: LokiDatasource,
-  request: DataQueryRequest<LokiQuery>,
-  splittingTargets: LokiQuery[]
+  datasource: LogsDatasource,
+  request: DataQueryRequest<LogsQuery>,
+  splittingTargets: LogsQuery[]
 ) {
   let shouldStop = false;
   let mergedResponse: DataQueryResponse = { data: [], key: uuidv4(), state: LoadingState.Streaming };

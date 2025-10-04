@@ -23,7 +23,7 @@ import {
   DATAPLANE_LABELS_NAME,
   DATAPLANE_LINE_NAME,
 } from './logsFrame';
-import { getLabelTypeFromFrame } from './lokiQuery';
+import { getLabelTypeFromFrame } from './queryTypes';
 import { setLevelColorOverrides } from './panel';
 import {
   getFieldsVariable,
